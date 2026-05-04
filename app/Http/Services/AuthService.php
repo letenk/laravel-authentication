@@ -11,6 +11,7 @@ use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\User;
 use App\Repository\RefreshTokenRepository;
 use App\Repository\UserRepository;
+use App\Support\PhoneNormalizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -32,18 +33,39 @@ class AuthService
 
     public function register(RegisterRequest $dto): User
     {
+        $phone = $dto->phone ? PhoneNormalizer::normalize($dto->phone) : null;
+
+        if ($phone) {
+            $existing = $this->userRepository->first(new UserRepositoryDTO([
+                'filters' => ['phone' => $phone],
+            ]));
+
+            if ($existing) {
+                throw GeneralException::create('Phone number already registered.', null, 409);
+            }
+        }
+
         return $this->userRepository->create([
             'name'       => $dto->name,
             'email'      => $dto->email,
+            'phone'      => $phone,
             'password'   => $dto->password,
-            'login_type' => 'email',
+            'login_type' => $dto->email ? 'email' : 'phone',
         ]);
     }
 
     public function login(LoginRequest $dto, Request $request): array
     {
+        $filters = [];
+
+        if ($dto->email) {
+            $filters['email'] = $dto->email;
+        } else {
+            $filters['phone'] = PhoneNormalizer::normalize($dto->phone);
+        }
+
         $user = $this->userRepository->first(new UserRepositoryDTO([
-            'filters' => ['email' => $dto->email],
+            'filters' => $filters,
         ]));
 
         if (!$user || !Hash::check($dto->password, $user->password)) {
