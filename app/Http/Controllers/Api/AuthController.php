@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Auth\RefreshTokenRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Services\AuthService;
 use Illuminate\Http\JsonResponse;
@@ -24,9 +25,9 @@ class AuthController extends BaseController
         return $this->successResponse('Registration successful.', $user, 201);
     }
 
-    public function login(LoginRequest $dto): JsonResponse
+    public function login(LoginRequest $dto, Request $request): JsonResponse
     {
-        $result = $this->authService->login($dto);
+        $result = $this->authService->login($dto, $request);
 
         return $this->successResponse('Login successful.', $result);
     }
@@ -36,9 +37,16 @@ class AuthController extends BaseController
         return $this->successResponse('User retrieved.', $request->user());
     }
 
-    public function logout(): JsonResponse
+    public function refresh(RefreshTokenRequest $dto): JsonResponse
     {
-        $this->authService->logout();
+        $result = $this->authService->refresh($dto);
+
+        return $this->successResponse('Token refreshed.', $result);
+    }
+
+    public function logout(RefreshTokenRequest $dto): JsonResponse
+    {
+        $this->authService->logout($dto);
 
         return $this->successResponse('Logged out successfully.');
     }

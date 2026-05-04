@@ -85,7 +85,7 @@ class LoginTest extends TestCase
             ->assertJsonPath('status', 'error');
     }
 
-    public function test_logout_invalidates_token(): void
+    public function test_logout_revokes_refresh_token(): void
     {
         User::factory()->create([
             'email'    => 'user@example.com',
@@ -97,16 +97,14 @@ class LoginTest extends TestCase
             'password' => 'NewSecurePass456!',
         ]);
 
-        $token = $loginResponse->json('data.token');
+        $refreshToken = $loginResponse->json('data.refresh_token');
 
-        $this->withToken($token)->postJson('/api/v1/auth/logout')
+        $this->postJson('/api/v1/auth/logout', ['refresh_token' => $refreshToken])
             ->assertStatus(200)
             ->assertJsonPath('status', 'success');
 
-        $this->app['auth']->forgetGuards();
-
-        // Token sudah di-blacklist — request berikutnya harus 401
-        $this->withToken($token)->getJson('/api/v1/auth/me')
+        // Refresh token sudah direvoke — tidak bisa dipakai lagi
+        $this->postJson('/api/v1/auth/refresh', ['refresh_token' => $refreshToken])
             ->assertStatus(401);
     }
 }
