@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Rules\UniqueNormalizedPhone;
 use Illuminate\Validation\Rules\Password;
 use Spatie\LaravelData\Data;
 
@@ -19,8 +20,7 @@ class RegisterRequest extends Data
         return [
             'name'     => ['required', 'string', 'max:255'],
             'email'    => ['nullable', 'email', 'max:255', 'unique:users,email', 'required_without:phone'],
-            'phone'    => ['nullable', 'string', 'max:20', 'regex:/^\+\d{1,3}\d+$/', 'required_without:email'],
-            // uniqueness checked in service after normalization
+            'phone'    => ['bail', 'nullable', 'phone', 'required_without:email', new UniqueNormalizedPhone()],
             'password' => ['required', 'string', Password::defaults()],
         ];
     }

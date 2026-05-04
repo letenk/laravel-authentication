@@ -16,7 +16,7 @@ class LoginRequest extends Data
     {
         return [
             'email'    => ['nullable', 'email', 'required_without:phone'],
-            'phone'    => ['nullable', 'string', 'regex:/^\+\d{1,3}\d+$/', 'required_without:email'],
+            'phone'    => ['nullable', 'phone', 'required_without:email'],
             'password' => ['required', 'string'],
         ];
     }
