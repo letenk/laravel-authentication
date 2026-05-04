@@ -9,6 +9,7 @@
         "php": "^8.3",
         "laravel/framework": "^13.0",
         "laravel/tinker": "^3.0",
+        "php-open-source-saver/jwt-auth": "^2.9",
         "spatie/laravel-data": "^4.22"
     },
     "require-dev": {

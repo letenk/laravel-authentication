@@ -202,6 +202,57 @@ Selalu gunakan `Password::defaults()` untuk field password. Jangan hardcode rule
 
 Policy didefinisikan di `app/Support/BootValidator.php`, dipanggil dari `AppServiceProvider::boot()`. Kalau ada custom validation rule baru, tambahkan method baru di `BootValidator` — jangan langsung di `AppServiceProvider`.
 
+## Logging
+
+### Kapan log dan di mana
+
+| Jenis Error | Di mana log | Level | Keterangan |
+|---|---|---|---|
+| Unexpected system error | Global handler (`bootstrap/app.php`) | `Log::error` | Otomatis — sudah terpasang |
+| Critical domain operation gagal di service | Service layer | `Log::error` | Harus eksplisit karena global handler tidak punya konteks domain |
+| Failed login / auth attempt | Service layer | `Log::warning` | Security observability, bukan error |
+| Expected domain error (wrong password, not found, dll) | **Tidak perlu di-log** | — | Ini `GeneralException`, bukan bug |
+
+### Contoh logging di service layer
+
+Gunakan `Log::error` di service layer **hanya** untuk operasi kritis yang butuh konteks domain (bukan untuk domain error yang diharapkan):
+
+```php
+// ✅ Log ini — operasi kritis yang tidak terduga gagal
+public function sendOtpEmail(User $user): void
+{
+    try {
+        Mail::to($user->email)->queue(new OtpMail($user));
+    } catch (\Throwable $e) {
+        Log::error('Failed to queue OTP email', [
+            'user_id' => $user->id,
+            'email'   => $user->email,
+            'error'   => $e->getMessage(),
+        ]);
+        throw GeneralException::create('Failed to send OTP. Please try again.', null, 500);
+    }
+}
+
+// ❌ Jangan log ini — ini domain error yang diharapkan
+public function login(LoginRequest $dto): array
+{
+    if (!$user || !Hash::check($dto->password, $user->password)) {
+        // Jangan Log::error di sini — salah password bukan bug
+        throw GeneralException::create('Invalid credentials.', null, 401);
+    }
+}
+```
+
+### Context yang wajib disertakan saat Log::error di service
+
+```php
+Log::error('Deskripsi singkat apa yang gagal', [
+    'user_id'   => $user->id,      // siapa yang terdampak
+    'entity_id' => $entity->id,    // entitas apa yang diproses
+    'error'     => $e->getMessage(),
+]);
+```
+
 ## Exception Handling
 Selalu gunakan `GeneralException::create($message, $data, $errCode)` untuk domain error. Jangan throw `\Exception` langsung dari service/repository.
 

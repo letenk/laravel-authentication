@@ -6,6 +6,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -19,7 +20,9 @@ return Application::configure(basePath: dirname(__DIR__))
         apiPrefix: 'api/v1',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'auth' => \App\Http\Middleware\Authenticate::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $jsonResponse = fn (string $status, string $message, mixed $data, int $code): JsonResponse =>
@@ -37,11 +40,11 @@ return Application::configure(basePath: dirname(__DIR__))
             return $jsonResponse('error', $e->getMessage(), $e->errors(), 422);
         });
 
-        $exceptions->render(function (AuthenticationException $e) use ($jsonResponse): JsonResponse {
+        $exceptions->render(function (AuthenticationException $_) use ($jsonResponse): JsonResponse {
             return $jsonResponse('error', 'Unauthenticated.', null, 401);
         });
 
-        $exceptions->render(function (NotFoundHttpException $e) use ($jsonResponse): JsonResponse {
+        $exceptions->render(function (NotFoundHttpException $_) use ($jsonResponse): JsonResponse {
             return $jsonResponse('error', 'Resource not found.', null, 404);
         });
 
@@ -50,7 +53,18 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $exceptions->render(function (Throwable $e) use ($jsonResponse): JsonResponse {
-            $code    = method_exists($e, 'getStatusCode') ? $e->getStatusCode() : 500;
+            $code = method_exists($e, 'getStatusCode') ? $e->getStatusCode() : 500;
+
+            Log::error('Unexpected error', [
+                'message' => $e->getMessage(),
+                'file'    => $e->getFile(),
+                'line'    => $e->getLine(),
+                'url'     => request()->fullUrl(),
+                'method'  => request()->method(),
+                'user_id' => auth()->id(),
+                'trace'   => $e->getTraceAsString(),
+            ]);
+
             $message = config('app.debug') ? $e->getMessage() : 'Server error.';
 
             return $jsonResponse('error', $message, null, $code);
