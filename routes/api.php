@@ -8,12 +8,12 @@ use Illuminate\Support\Facades\Route;
 Route::get('/health', [HealthController::class, 'index']);
 
 Route::prefix('auth')->group(function () {
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/login', [AuthController::class, 'login']);
-    Route::post('/refresh', [AuthController::class, 'refresh']);
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:register');
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
+    Route::post('/refresh', [AuthController::class, 'refresh'])->middleware('throttle:refresh');
     Route::post('/logout', [AuthController::class, 'logout']);
-    Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
-    Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+    Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:forgot-password');
+    Route::post('/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:reset-password');
 
     Route::middleware('auth:api')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
@@ -21,8 +21,8 @@ Route::prefix('auth')->group(function () {
         Route::post('/logout-all', [AuthController::class, 'logoutAll']);
 
         Route::prefix('/email')->group(function () {
-            Route::post('/send-otp', [AuthController::class, 'sendEmailOtp']);
-            Route::post('/verify', [AuthController::class, 'verifyEmail']);
+            Route::post('/send-otp', [AuthController::class, 'sendEmailOtp'])->middleware('throttle:email-send-otp');
+            Route::post('/verify', [AuthController::class, 'verifyEmail'])->middleware('throttle:email-verify');
         });
     });
 });

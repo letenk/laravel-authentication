@@ -5,6 +5,7 @@ use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -42,6 +43,10 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->render(function (AuthenticationException $_) use ($jsonResponse): JsonResponse {
             return $jsonResponse('error', 'Unauthenticated.', null, 401);
+        });
+
+        $exceptions->render(function (ThrottleRequestsException $e) use ($jsonResponse): JsonResponse {
+            return $jsonResponse('error', 'Too many requests. Please try again later.', null, 429);
         });
 
         $exceptions->render(function (NotFoundHttpException $_) use ($jsonResponse): JsonResponse {
