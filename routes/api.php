@@ -17,6 +17,7 @@ Route::prefix('auth')->group(function () {
 
     Route::middleware('auth:api')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
+        Route::delete('/me', [AuthController::class, 'deleteAccount']);
         Route::post('/logout-all', [AuthController::class, 'logoutAll']);
 
         Route::prefix('/email')->group(function () {
@@ -29,4 +30,6 @@ Route::prefix('auth')->group(function () {
 Route::prefix('user')->middleware('auth:api')->group(function () {
     Route::get('/sessions', [UserController::class, 'sessions']);
     Route::delete('/sessions/{id}', [UserController::class, 'revokeSession']);
+    Route::put('/profile', [UserController::class, 'updateProfile']);
+    Route::put('/password', [UserController::class, 'changePassword']);
 });

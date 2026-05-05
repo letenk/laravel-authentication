@@ -80,6 +80,13 @@ class AuthController extends BaseController
         return $this->successResponse('Logged out from all devices.');
     }
 
+    public function deleteAccount(Request $request): JsonResponse
+    {
+        $this->authService->deleteAccount($request->user());
+
+        return $this->successResponse('Account deleted.');
+    }
+
     public function sendEmailOtp(Request $request): JsonResponse
     {
         $this->otpService->send($request->user(), 'email', 'email_verification');

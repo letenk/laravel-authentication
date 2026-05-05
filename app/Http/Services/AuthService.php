@@ -148,6 +148,12 @@ class AuthService
         $this->refreshTokenRepository->revokeAllByUserId($user->id);
     }
 
+    public function deleteAccount(User $user): void
+    {
+        $this->refreshTokenRepository->revokeAllByUserId($user->id);
+        $user->delete();
+    }
+
     public function forgotPassword(ForgotPasswordRequest $dto): void
     {
         $user = $this->userRepository->first(new UserRepositoryDTO([
