@@ -6,6 +6,11 @@ use Illuminate\Database\Eloquent\Builder;
 
 class RefreshTokenScope extends Builder
 {
+    public function filterById(int $id): static
+    {
+        return $this->where('id', $id);
+    }
+
     public function filterByToken(string $token): static
     {
         return $this->where('token', $token);

@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\DTOs\RefreshToken\RefreshTokenRepositoryDTO;
 use App\Models\RefreshToken;
 use App\Models\Scope\RefreshTokenScope;
+use Illuminate\Database\Eloquent\Collection;
 
 class RefreshTokenRepository
 {
@@ -21,6 +22,10 @@ class RefreshTokenRepository
 
     public function applyFilters(RefreshTokenScope $query, array $filters): RefreshTokenScope
     {
+        if (isset($filters['id'])) {
+            $query->filterById($filters['id']);
+        }
+
         if (isset($filters['token'])) {
             $query->filterByToken($filters['token']);
         }
@@ -42,6 +47,14 @@ class RefreshTokenRepository
         $query = $this->applyFilters($query, $dto->filters);
 
         return $query->first();
+    }
+
+    public function get(RefreshTokenRepositoryDTO $dto): Collection
+    {
+        $query = $this->baseQuery($dto->select, $dto->eagerLoadRelation);
+        $query = $this->applyFilters($query, $dto->filters);
+
+        return $query->latest()->get();
     }
 
     public function create(array $data): RefreshToken

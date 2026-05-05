@@ -73,6 +73,13 @@ class AuthController extends BaseController
         return $this->successResponse('Password reset successfully.');
     }
 
+    public function logoutAll(Request $request): JsonResponse
+    {
+        $this->authService->logoutAll($request->user());
+
+        return $this->successResponse('Logged out from all devices.');
+    }
+
     public function sendEmailOtp(Request $request): JsonResponse
     {
         $this->otpService->send($request->user(), 'email', 'email_verification');
