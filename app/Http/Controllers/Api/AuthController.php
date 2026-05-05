@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Requests\Auth\ForgotPasswordRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RefreshTokenRequest;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Requests\Auth\ResetPasswordRequest;
 use App\Http\Requests\Auth\VerifyOtpRequest;
 use App\Http\Services\AuthService;
 use App\Http\Services\OtpService;
@@ -55,6 +57,20 @@ class AuthController extends BaseController
         $this->authService->logout($dto);
 
         return $this->successResponse('Logged out successfully.');
+    }
+
+    public function forgotPassword(ForgotPasswordRequest $dto): JsonResponse
+    {
+        $this->authService->forgotPassword($dto);
+
+        return $this->successResponse('If that email is registered, a reset code has been sent.');
+    }
+
+    public function resetPassword(ResetPasswordRequest $dto): JsonResponse
+    {
+        $this->authService->resetPassword($dto);
+
+        return $this->successResponse('Password reset successfully.');
     }
 
     public function sendEmailOtp(Request $request): JsonResponse

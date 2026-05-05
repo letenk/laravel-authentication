@@ -5,9 +5,11 @@ namespace App\Http\Services;
 use App\DTOs\RefreshToken\RefreshTokenRepositoryDTO;
 use App\DTOs\User\UserRepositoryDTO;
 use App\Exceptions\GeneralException;
+use App\Http\Requests\Auth\ForgotPasswordRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RefreshTokenRequest;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Requests\Auth\ResetPasswordRequest;
 use App\Models\User;
 use App\Repository\RefreshTokenRepository;
 use App\Repository\UserRepository;
@@ -139,5 +141,36 @@ class AuthService
         }
 
         $this->refreshTokenRepository->revoke($token);
+    }
+
+    public function forgotPassword(ForgotPasswordRequest $dto): void
+    {
+        $user = $this->userRepository->first(new UserRepositoryDTO([
+            'filters' => ['email' => $dto->email],
+        ]));
+
+        if (!$user) {
+            return;
+        }
+
+        $this->otpService->send($user, 'email', 'password_reset');
+    }
+
+    public function resetPassword(ResetPasswordRequest $dto): void
+    {
+        $user = $this->userRepository->first(new UserRepositoryDTO([
+            'filters' => ['email' => $dto->email],
+        ]));
+
+        if (!$user) {
+            throw GeneralException::create('Invalid or expired code.', null, 422);
+        }
+
+        $this->otpService->verify($user, $dto->code, 'email', 'password_reset');
+
+        $user->password = Hash::make($dto->password);
+        $user->save();
+
+        $this->refreshTokenRepository->revokeAllByUserId($user->id);
     }
 }
