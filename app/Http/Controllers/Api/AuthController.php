@@ -5,17 +5,23 @@ namespace App\Http\Controllers\Api;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RefreshTokenRequest;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Requests\Auth\VerifyOtpRequest;
 use App\Http\Services\AuthService;
+use App\Http\Services\OtpService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AuthController extends BaseController
 {
     protected AuthService $authService;
+    protected OtpService $otpService;
 
-    public function __construct(AuthService $authService)
-    {
+    public function __construct(
+        AuthService $authService,
+        OtpService $otpService,
+    ) {
         $this->authService = $authService;
+        $this->otpService  = $otpService;
     }
 
     public function register(RegisterRequest $dto): JsonResponse
@@ -49,5 +55,19 @@ class AuthController extends BaseController
         $this->authService->logout($dto);
 
         return $this->successResponse('Logged out successfully.');
+    }
+
+    public function sendEmailOtp(Request $request): JsonResponse
+    {
+        $this->otpService->send($request->user(), 'email', 'email_verification');
+
+        return $this->successResponse('Verification code sent to your email.');
+    }
+
+    public function verifyEmail(VerifyOtpRequest $dto, Request $request): JsonResponse
+    {
+        $this->otpService->verify($request->user(), $dto->code, 'email', 'email_verification');
+
+        return $this->successResponse('Email verified successfully.');
     }
 }

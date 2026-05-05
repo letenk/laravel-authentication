@@ -14,5 +14,10 @@ Route::prefix('auth')->group(function () {
 
     Route::middleware('auth:api')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
+
+        Route::prefix('/email')->group(function(){
+            Route::post('/send-otp', [AuthController::class, 'sendEmailOtp']);
+            Route::post('/verify', [AuthController::class, 'verifyEmail']);
+        });
     });
 });

@@ -21,26 +21,35 @@ class AuthService
 {
     protected UserRepository $userRepository;
     protected RefreshTokenRepository $refreshTokenRepository;
+    protected OtpService $otpService;
 
     public function __construct(
         UserRepository $userRepository,
         RefreshTokenRepository $refreshTokenRepository,
+        OtpService $otpService,
     ) {
-        $this->userRepository        = $userRepository;
+        $this->userRepository         = $userRepository;
         $this->refreshTokenRepository = $refreshTokenRepository;
+        $this->otpService             = $otpService;
     }
 
     public function register(RegisterRequest $dto): User
     {
         $phone = $dto->phone ? ltrim(phone($dto->phone)->formatE164(), '+') : null;
 
-        return $this->userRepository->create([
+        $user = $this->userRepository->create([
             'name'       => $dto->name,
             'email'      => $dto->email,
             'phone'      => $phone,
             'password'   => $dto->password,
             'login_type' => $dto->email ? 'email' : 'phone',
         ]);
+
+        if ($dto->email) {
+            $this->otpService->send($user, 'email', 'email_verification');
+        }
+
+        return $user;
     }
 
     public function login(LoginRequest $dto, Request $request): array
