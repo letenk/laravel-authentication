@@ -168,7 +168,6 @@ docker compose up --build -d
 ```
 
 > App will be available at `http://localhost:8000`.
-> If your database is on Tailscale or an external host, set `DB_HOST=host.docker.internal` in `.env`.
 
 ---
 
