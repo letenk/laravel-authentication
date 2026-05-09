@@ -1,6 +1,8 @@
-# Laravel Auth System — Production-Ready Authentication Boilerplate
+# Laravel Auth System — Authentication Boilerplate Built with Production-Grade Patterns
 
-A complete, production-ready authentication boilerplate built with Laravel 13. Designed to be the starting point for any PHP project that requires a solid auth foundation — no boilerplate writing from scratch every time.
+A well-architected authentication boilerplate built with Laravel 13, designed to be the starting point for any PHP project that needs a solid auth foundation. The patterns and architecture here — typed request DTOs via spatie/laravel-data, custom query scopes per model, repository DTOs, generic OTP table, libphonenumber-based phone validation, token rotation — are the same patterns you'd reach for in production code.
+
+This is a **foundation, not a finished production system**. Use it to skip the boilerplate; harden it for your production environment as you grow.
 
 > Built as a personal boilerplate and portfolio project by [Rizky Darmawan](https://github.com/letenk).
 
