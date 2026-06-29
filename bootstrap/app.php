@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
         apiPrefix: 'api/v1',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->encryptCookies(except: ['access_token', 'refresh_token']);
         $middleware->alias([
             'auth' => \App\Http\Middleware\Authenticate::class,
         ]);
