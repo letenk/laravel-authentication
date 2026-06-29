@@ -51,10 +51,29 @@ class RefreshTokenTest extends TestCase
             ->assertJsonPath('status', 'success')
             ->assertJsonStructure([
                 'data' => ['token', 'token_type', 'expires_in', 'refresh_token'],
-            ]);
+            ])
+            ->assertCookie('access_token')
+            ->assertCookie('refresh_token');
 
         $newRefreshToken = $response->json('data.refresh_token');
         $this->assertNotEquals($tokens['refresh_token'], $newRefreshToken);
+    }
+
+    public function test_refresh_via_cookie(): void
+    {
+        $tokens = $this->login();
+
+        $response = $this->withCredentials()
+            ->withUnencryptedCookies(['refresh_token' => $tokens['refresh_token']])
+            ->postJson('/api/v1/auth/refresh');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('status', 'success')
+            ->assertJsonStructure([
+                'data' => ['token', 'token_type', 'expires_in', 'refresh_token'],
+            ])
+            ->assertCookie('access_token')
+            ->assertCookie('refresh_token');
     }
 
     public function test_old_refresh_token_cannot_be_used_after_rotation(): void
@@ -109,7 +128,29 @@ class RefreshTokenTest extends TestCase
         $this->postJson('/api/v1/auth/logout', [
             'refresh_token' => $tokens['refresh_token'],
         ])->assertStatus(200)
-            ->assertJsonPath('status', 'success');
+            ->assertJsonPath('status', 'success')
+            ->assertCookieExpired('access_token')
+            ->assertCookieExpired('refresh_token');
+
+        $this->assertNotNull(
+            \App\Models\RefreshToken::query()
+                ->filterByToken($tokens['refresh_token'])
+                ->first()
+                ?->revoked_at
+        );
+    }
+
+    public function test_logout_via_cookie(): void
+    {
+        $tokens = $this->login();
+
+        $this->withCredentials()
+            ->withUnencryptedCookies(['refresh_token' => $tokens['refresh_token']])
+            ->postJson('/api/v1/auth/logout')
+            ->assertStatus(200)
+            ->assertJsonPath('status', 'success')
+            ->assertCookieExpired('access_token')
+            ->assertCookieExpired('refresh_token');
 
         $this->assertNotNull(
             \App\Models\RefreshToken::query()
@@ -136,7 +177,14 @@ class RefreshTokenTest extends TestCase
     public function test_refresh_fails_with_missing_token(): void
     {
         $this->postJson('/api/v1/auth/refresh', [])
-            ->assertStatus(422)
+            ->assertStatus(401)
+            ->assertJsonPath('status', 'error');
+    }
+
+    public function test_logout_fails_with_missing_token(): void
+    {
+        $this->postJson('/api/v1/auth/logout', [])
+            ->assertStatus(401)
             ->assertJsonPath('status', 'error');
     }
 }

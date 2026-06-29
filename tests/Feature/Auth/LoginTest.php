@@ -28,7 +28,9 @@ class LoginTest extends TestCase
                 'data' => ['token', 'token_type', 'expires_in'],
             ])
             ->assertJsonPath('data.token_type', 'Bearer')
-            ->assertJsonMissing(['data' => ['user']]);
+            ->assertJsonMissing(['data' => ['user']])
+            ->assertCookie('access_token')
+            ->assertCookie('refresh_token');
     }
 
     public function test_login_fails_with_wrong_password(): void
@@ -101,7 +103,9 @@ class LoginTest extends TestCase
 
         $this->postJson('/api/v1/auth/logout', ['refresh_token' => $refreshToken])
             ->assertStatus(200)
-            ->assertJsonPath('status', 'success');
+            ->assertJsonPath('status', 'success')
+            ->assertCookieExpired('access_token')
+            ->assertCookieExpired('refresh_token');
 
         // Refresh token sudah direvoke — tidak bisa dipakai lagi
         $this->postJson('/api/v1/auth/refresh', ['refresh_token' => $refreshToken])
